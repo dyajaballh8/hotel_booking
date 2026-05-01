@@ -20,7 +20,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _load();
-    ApiService().testConnection();
   }
 
   Future<void> _load() async {

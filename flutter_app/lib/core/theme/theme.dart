@@ -1,4 +1,3 @@
-// ─── theme.dart ────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -87,7 +86,6 @@ class AppTheme {
       );
 }
 
-// ── Room Type Helpers ──────────────────────────────────────────────────────
 
 class RoomTypeConfig {
   static const icons = {

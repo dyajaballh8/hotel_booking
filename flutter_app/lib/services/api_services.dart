@@ -4,22 +4,7 @@ import '../models/models.dart';
 
 class ApiService {
 static const String _base = 'http://192.168.1.3:8000';
-  // ── 🔥 TEST CONNECTION ─────────────────────────────
-  Future<void> testConnection() async {
-    try {
-      final res = await http.get(
-        Uri.parse('$_base'),
-      ).timeout(const Duration(seconds: 10));
-
-      print('✅ STATUS: ${res.statusCode}');
-      print('✅ BODY: ${res.body}');
-    } catch (e) {
-      print('❌ CONNECTION ERROR: $e');
-    }
-  }
-
-  // ── Helpers ─────────────────────────────────────────
-
+ 
   Future<Map<String, dynamic>> _get(String path) async {
     final res = await http.get(Uri.parse('$_base$path'));
     if (res.statusCode != 200) {
