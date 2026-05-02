@@ -10,7 +10,7 @@ import '../models/models.dart';
 import '../models/csp_report_model.dart';
 
 class ApiService {
-  static const String _base = 'http://localhost:8000';
+  static const String _base = 'http://192.168.1.3:8000';
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -22,7 +22,10 @@ class ApiService {
     return json.decode(res.body);
   }
 
-  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _post(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
     final res = await http.post(
       Uri.parse('$_base$path'),
       headers: {'Content-Type': 'application/json'},
@@ -92,12 +95,16 @@ class ApiService {
 
   Future<List<BookingRequest>> getPendingRequests() async {
     final data = await _get('/api/requests');
-    return (data['requests'] as List).map((e) => BookingRequest.fromJson(e)).toList();
+    return (data['requests'] as List)
+        .map((e) => BookingRequest.fromJson(e))
+        .toList();
   }
 
   // ── Assignment ────────────────────────────────────────────────────────────
 
-  Future<AssignmentResult> runAssignment({String algorithm = 'backtracking'}) async {
+  Future<AssignmentResult> runAssignment({
+    String algorithm = 'backtracking',
+  }) async {
     final data = await _post('/api/assign', {'algorithm': algorithm});
     return AssignmentResult.fromJson(data);
   }

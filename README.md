@@ -46,9 +46,26 @@ hotel_booking/
 
 ```bash
 cd python_backend
-pip install -r requirements.txt
-uvicorn api:app --reload --port 8000
 ```
+
+> ⚠️ **Python 3.14 على Windows** — لا تستخدم `requirements.txt` مباشرة.
+> استخدم الأمر ده بدلاً منه:
+
+```bash
+pip install fastapi uvicorn[standard] pydantic
+```
+
+ثم شغّل السيرفر:
+
+```bash
+python -m uvicorn api:app --reload --host 0.0.0.0 --port 8000
+```
+
+> 💡 لو ظهرت رسالة `uvicorn not recognized` استخدم دايماً `python -m uvicorn` بدل `uvicorn` مباشرة.
+> 
+> **سبب المشكلة:** Python 3.14 جديد جداً وما فيش `pydantic-core` wheel جاهز له،
+> فـ pip بيحاول يبني من الـ source ويفشل لأنه محتاج Visual C++ Build Tools.
+> الحل هو تثبيت أحدث version متوافقة مباشرة بدون تحديد version ثابتة.
 
 API runs at: `http://localhost:8000`
 Swagger docs: `http://localhost:8000/docs`

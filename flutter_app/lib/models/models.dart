@@ -5,6 +5,7 @@ enum RoomType { single, double, suite }
 
 enum Priority { normal, vip }
 
+// ignore: constant_identifier_names
 enum BookingStatus { confirmed, pending, cancelled, no_availability }
 
 // ── Room ──────────────────────────────────────────────────────────────────
