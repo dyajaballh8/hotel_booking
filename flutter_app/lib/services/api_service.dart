@@ -1,10 +1,19 @@
+// ─── api_service.dart ──────────────────────────────────────────────────────
+// HTTP client connecting Flutter to the Python FastAPI backend.
+// Uses http package. Add to pubspec.yaml:
+//   dependencies:
+//     http: ^1.2.0
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
+import '../models/csp_report_model.dart';
 
 class ApiService {
-static const String _base = 'http://192.168.1.3:8000';
- 
+  static const String _base = 'http://localhost:8000';
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> _get(String path) async {
     final res = await http.get(Uri.parse('$_base$path'));
     if (res.statusCode != 200) {
@@ -13,10 +22,7 @@ static const String _base = 'http://192.168.1.3:8000';
     return json.decode(res.body);
   }
 
-  Future<Map<String, dynamic>> _post(
-    String path,
-    Map<String, dynamic> body,
-  ) async {
+  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     final res = await http.post(
       Uri.parse('$_base$path'),
       headers: {'Content-Type': 'application/json'},
@@ -36,14 +42,14 @@ static const String _base = 'http://192.168.1.3:8000';
     return json.decode(res.body);
   }
 
-  // ── Dashboard ───────────────────────────────────────
+  // ── Dashboard ─────────────────────────────────────────────────────────────
 
   Future<DashboardStats> getDashboard() async {
     final data = await _get('/api/dashboard');
     return DashboardStats.fromJson(data);
   }
 
-  // ── Rooms ───────────────────────────────────────────
+  // ── Rooms ─────────────────────────────────────────────────────────────────
 
   Future<List<Room>> getRooms() async {
     final data = await _get('/api/rooms');
@@ -62,7 +68,7 @@ static const String _base = 'http://192.168.1.3:8000';
     return (data['rooms'] as List).map((e) => Room.fromJson(e)).toList();
   }
 
-  // ── Guests ──────────────────────────────────────────
+  // ── Guests ────────────────────────────────────────────────────────────────
 
   Future<Guest> createGuest({
     required String name,
@@ -77,7 +83,7 @@ static const String _base = 'http://192.168.1.3:8000';
     return Guest.fromJson(data);
   }
 
-  // ── Booking Requests ────────────────────────────────
+  // ── Booking Requests ──────────────────────────────────────────────────────
 
   Future<BookingRequest> submitRequest(BookingRequest req) async {
     final data = await _post('/api/requests', req.toJson());
@@ -86,21 +92,17 @@ static const String _base = 'http://192.168.1.3:8000';
 
   Future<List<BookingRequest>> getPendingRequests() async {
     final data = await _get('/api/requests');
-    return (data['requests'] as List)
-        .map((e) => BookingRequest.fromJson(e))
-        .toList();
+    return (data['requests'] as List).map((e) => BookingRequest.fromJson(e)).toList();
   }
 
-  // ── Assignment ──────────────────────────────────────
+  // ── Assignment ────────────────────────────────────────────────────────────
 
-  Future<AssignmentResult> runAssignment({
-    String algorithm = 'backtracking',
-  }) async {
+  Future<AssignmentResult> runAssignment({String algorithm = 'backtracking'}) async {
     final data = await _post('/api/assign', {'algorithm': algorithm});
     return AssignmentResult.fromJson(data);
   }
 
-  // ── Bookings ───────────────────────────────────────
+  // ── Bookings ──────────────────────────────────────────────────────────────
 
   Future<List<Booking>> getBookings() async {
     final data = await _get('/api/bookings');
@@ -111,7 +113,14 @@ static const String _base = 'http://192.168.1.3:8000';
     await _delete('/api/bookings/$bookingId');
   }
 
-  // ── Util ───────────────────────────────────────────
+  // ── CSP Report ────────────────────────────────────────────────────────────
+
+  Future<CspReport> getCspReport() async {
+    final data = await _get('/api/csp-report');
+    return CspReport.fromJson(data);
+  }
+
+  // ── Util ──────────────────────────────────────────────────────────────────
 
   String _fmt(DateTime d) => d.toIso8601String().substring(0, 10);
 }

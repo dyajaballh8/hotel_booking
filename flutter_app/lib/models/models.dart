@@ -27,19 +27,19 @@ class Room {
   });
 
   factory Room.fromJson(Map<String, dynamic> json) => Room(
-    roomId: json['room_id'],
-    roomNumber: json['room_number'],
-    roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
-    floor: json['floor'],
-    pricePerNight: (json['price_per_night'] as num).toDouble(),
-    isActive: json['is_active'] ?? true,
-  );
+        roomId: json['room_id'],
+        roomNumber: json['room_number'],
+        roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
+        floor: json['floor'],
+        pricePerNight: (json['price_per_night'] as num).toDouble(),
+        isActive: json['is_active'] ?? true,
+      );
 
   String get typeLabel => switch (roomType) {
-    RoomType.single => 'Single',
-    RoomType.double => 'Double',
-    RoomType.suite => 'Suite',
-  };
+        RoomType.single => 'Single',
+        RoomType.double => 'Double',
+        RoomType.suite => 'Suite',
+      };
 }
 
 // ── Guest ─────────────────────────────────────────────────────────────────
@@ -58,14 +58,15 @@ class Guest {
   });
 
   factory Guest.fromJson(Map<String, dynamic> json) => Guest(
-    guestId: json['guest_id'],
-    name: json['name'],
-    email: json['email'],
-    priority: Priority.values.firstWhere((e) => e.name == json['priority']),
-  );
+        guestId: json['guest_id'],
+        name: json['name'],
+        email: json['email'],
+        priority: Priority.values.firstWhere((e) => e.name == json['priority']),
+      );
 }
 
 // ── Booking ───────────────────────────────────────────────────────────────
+
 class Booking {
   final int bookingId;
   final Guest guest;
@@ -74,6 +75,7 @@ class Booking {
   final DateTime checkOut;
   final BookingStatus status;
   final double totalPrice;
+  final int nights;
 
   const Booking({
     required this.bookingId,
@@ -83,19 +85,19 @@ class Booking {
     required this.checkOut,
     required this.status,
     required this.totalPrice,
+    required this.nights,
   });
 
-  int get nights => checkOut.difference(checkIn).inDays;
-
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
-    bookingId: json['booking_id'],
-    guest: Guest.fromJson(json['guest']),
-    room: Room.fromJson(json['room']),
-    checkIn: DateTime.parse(json['check_in']),
-    checkOut: DateTime.parse(json['check_out']),
-    status: BookingStatus.values.firstWhere((e) => e.name == json['status']),
-    totalPrice: (json['total_price'] as num).toDouble(),
-  );
+        bookingId: json['booking_id'],
+        guest: Guest.fromJson(json['guest']),
+        room: Room.fromJson(json['room']),
+        checkIn: DateTime.parse(json['check_in']),
+        checkOut: DateTime.parse(json['check_out']),
+        status: BookingStatus.values.firstWhere((e) => e.name == json['status']),
+        totalPrice: (json['total_price'] as num).toDouble(),
+        nights: json['nights'],
+      );
 }
 
 // ── BookingRequest ────────────────────────────────────────────────────────
@@ -122,24 +124,24 @@ class BookingRequest {
   });
 
   factory BookingRequest.fromJson(Map<String, dynamic> json) => BookingRequest(
-    requestId: json['request_id'],
-    guestId: json['guest_id'],
-    guestName: json['guest_name'],
-    roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
-    checkIn: DateTime.parse(json['check_in']),
-    checkOut: DateTime.parse(json['check_out']),
-    priority: Priority.values.firstWhere((e) => e.name == json['priority']),
-    nights: json['nights'],
-  );
+        requestId: json['request_id'],
+        guestId: json['guest_id'],
+        guestName: json['guest_name'],
+        roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
+        checkIn: DateTime.parse(json['check_in']),
+        checkOut: DateTime.parse(json['check_out']),
+        priority: Priority.values.firstWhere((e) => e.name == json['priority']),
+        nights: json['nights'],
+      );
 
   Map<String, dynamic> toJson() => {
-    "guest_id": guestId,
-    "guest_name": guestName,
-    "room_type": roomType.name.toLowerCase(),
-    "check_in": checkIn.toIso8601String().split('T')[0],
-    "check_out": checkOut.toIso8601String().split('T')[0],
-    "priority": priority.name.toLowerCase(),
-  };
+        'guest_id': guestId,
+        'guest_name': guestName,
+        'room_type': roomType.name,
+        'check_in': checkIn.toIso8601String().substring(0, 10),
+        'check_out': checkOut.toIso8601String().substring(0, 10),
+        'priority': priority.name,
+      };
 }
 
 // ── DashboardStats ────────────────────────────────────────────────────────
@@ -162,13 +164,13 @@ class DashboardStats {
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) => DashboardStats(
-    totalRooms: json['total_rooms'],
-    totalBookings: json['total_bookings'],
-    activeStays: json['active_stays'],
-    totalRevenue: (json['total_revenue'] as num).toDouble(),
-    roomsByType: Map<String, int>.from(json['rooms_by_type']),
-    pendingRequests: json['pending_requests'],
-  );
+        totalRooms: json['total_rooms'],
+        totalBookings: json['total_bookings'],
+        activeStays: json['active_stays'],
+        totalRevenue: (json['total_revenue'] as num).toDouble(),
+        roomsByType: Map<String, int>.from(json['rooms_by_type']),
+        pendingRequests: json['pending_requests'],
+      );
 }
 
 // ── AssignmentResult ──────────────────────────────────────────────────────
@@ -190,16 +192,11 @@ class AssignmentResult {
     required this.totalUnassigned,
   });
 
-  factory AssignmentResult.fromJson(Map<String, dynamic> json) =>
-      AssignmentResult(
+  factory AssignmentResult.fromJson(Map<String, dynamic> json) => AssignmentResult(
         status: json['status'],
         algorithm: json['algorithm'] ?? '',
-        bookings: (json['bookings'] as List)
-            .map((e) => Booking.fromJson(e))
-            .toList(),
-        unassigned: (json['unassigned'] as List)
-            .map((e) => BookingRequest.fromJson(e))
-            .toList(),
+        bookings: (json['bookings'] as List).map((e) => Booking.fromJson(e)).toList(),
+        unassigned: (json['unassigned'] as List).map((e) => BookingRequest.fromJson(e)).toList(),
         totalAssigned: json['total_assigned'] ?? 0,
         totalUnassigned: json['total_unassigned'] ?? 0,
       );

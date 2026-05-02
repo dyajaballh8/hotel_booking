@@ -1,8 +1,8 @@
 // ─── dashboard_screen.dart ─────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_app/core/theme/theme.dart';
-import 'package:flutter_app/services/api_services.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
+import '../theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,18 +26,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _loading = true);
     try {
       final stats = await _api.getDashboard();
-      setState(() {
-        _stats = stats;
-        _loading = false;
-      });
+      setState(() { _stats = stats; _loading = false; });
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Connection error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Connection error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -56,79 +50,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.gold))
           : _stats == null
-          ? const Center(
-              child: Text(
-                'Failed to load',
-                style: TextStyle(color: AppTheme.textSecondary),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              color: AppTheme.gold,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildStatGrid(),
-                    const SizedBox(height: 24),
-                    _buildRoomTypeBreakdown(),
-                    const SizedBox(height: 24),
-                    _buildQuickActions(),
-                  ],
+              ? const Center(child: Text('Failed to load', style: TextStyle(color: AppTheme.textSecondary)))
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  color: AppTheme.gold,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatGrid(),
+                        const SizedBox(height: 24),
+                        _buildRoomTypeBreakdown(),
+                        const SizedBox(height: 24),
+                        _buildQuickActions(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
     );
   }
 
   Widget _buildStatGrid() {
     final stats = _stats!;
     final items = [
-      _StatItem(
-        'Total Rooms',
-        stats.totalRooms.toString(),
-        Icons.meeting_room,
-        AppTheme.gold,
-      ),
-      _StatItem(
-        'Bookings',
-        stats.totalBookings.toString(),
-        Icons.book_online,
-        AppTheme.teal,
-      ),
-      _StatItem(
-        'Active Stays',
-        stats.activeStays.toString(),
-        Icons.person,
-        const Color(0xFF9B6FD4),
-      ),
-      _StatItem(
-        'Revenue',
-        '\$${stats.totalRevenue.toStringAsFixed(0)}',
-        Icons.attach_money,
-        const Color(0xFF4CAF50),
-      ),
-      _StatItem(
-        'Pending',
-        stats.pendingRequests.toString(),
-        Icons.pending_actions,
-        const Color(0xFFFF9800),
-      ),
+      _StatItem('Total Rooms', stats.totalRooms.toString(), Icons.meeting_room, AppTheme.gold),
+      _StatItem('Bookings', stats.totalBookings.toString(), Icons.book_online, AppTheme.teal),
+      _StatItem('Active Stays', stats.activeStays.toString(), Icons.person, const Color(0xFF9B6FD4)),
+      _StatItem('Revenue', '\$${stats.totalRevenue.toStringAsFixed(0)}', Icons.attach_money, const Color(0xFF4CAF50)),
+      _StatItem('Pending', stats.pendingRequests.toString(), Icons.pending_actions, const Color(0xFFFF9800)),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Overview',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        const Text('Overview', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
@@ -136,7 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.3,
+          childAspectRatio: 1.6,
           children: items.map(_buildStatCard).toList(),
         ),
       ],
@@ -159,21 +116,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                item.value,
-                style: TextStyle(
-                  color: item.color,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                item.label,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
+              Text(item.value, style: TextStyle(color: item.color, fontSize: 24, fontWeight: FontWeight.w900)),
+              Text(item.label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
             ],
           ),
         ],
@@ -186,14 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Rooms by Type',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        const Text('Rooms by Type', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         ...byType.entries.map((e) {
           final color = RoomTypeConfig.colors[e.key] ?? AppTheme.gold;
@@ -210,22 +147,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Icon(icon, color: color, size: 20),
                 const SizedBox(width: 12),
-                Text(
-                  e.key.toUpperCase(),
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
+                Text(e.key.toUpperCase(), style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
                 const Spacer(),
-                Text(
-                  '${e.value} rooms',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
+                Text('${e.value} rooms', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               ],
             ),
           );
@@ -238,14 +162,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        const Text('Quick Actions', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -254,10 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: 'New Booking',
                 icon: Icons.add,
                 color: AppTheme.gold,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  '/new_booking',
-                ).then((_) => _load()),
+                onTap: () => Navigator.pushNamed(context, '/new_booking').then((_) => _load()),
               ),
             ),
             const SizedBox(width: 12),
@@ -266,10 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: 'Run Algorithm',
                 icon: Icons.play_arrow,
                 color: AppTheme.teal,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  '/assign',
-                ).then((_) => _load()),
+                onTap: () => Navigator.pushNamed(context, '/assign').then((_) => _load()),
               ),
             ),
           ],
@@ -295,6 +206,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: _ActionButton(
+            label: 'CSP — تقرير التوزيع التفصيلي',
+            icon: Icons.table_chart,
+            color: const Color(0xFF4A9FD4),
+            onTap: () => Navigator.pushNamed(context, '/csp_report'),
+          ),
         ),
       ],
     );
@@ -339,14 +260,7 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
           ],
         ),
       ),

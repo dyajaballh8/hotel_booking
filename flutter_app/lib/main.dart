@@ -1,13 +1,13 @@
 // ─── main.dart ─────────────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_app/core/theme/theme.dart';
-import 'package:flutter_app/screens/pending_screen.dart';
-import 'package:flutter_app/screens/rooms_screen.dart';
+import 'theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/new_booking_screen.dart';
 import 'screens/assignment_screen.dart';
 import 'screens/bookings_screen.dart';
-
+import 'screens/rooms_screen.dart';
+import 'screens/pending_screen.dart';
+import 'screens/csp_report_screen.dart';
 
 void main() {
   runApp(const HotelBookingApp());
@@ -30,6 +30,7 @@ class HotelBookingApp extends StatelessWidget {
         '/bookings':    (_) => const BookingsScreen(),
         '/pending':     (_) => const PendingScreen(),
         '/rooms':       (_) => const RoomsScreen(),
+        '/csp_report':  (_) => const CspReportScreen(),
       },
     );
   }

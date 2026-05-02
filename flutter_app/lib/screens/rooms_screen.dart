@@ -1,8 +1,8 @@
 // ─── rooms_screen.dart ─────────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_app/core/theme/theme.dart';
-import 'package:flutter_app/services/api_services.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
+import '../theme.dart';
 
 class RoomsScreen extends StatefulWidget {
   const RoomsScreen({super.key});
@@ -27,10 +27,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
     setState(() => _loading = true);
     try {
       final rooms = await _api.getRooms();
-      setState(() {
-        _rooms = rooms;
-        _loading = false;
-      });
+      setState(() { _rooms = rooms; _loading = false; });
     } catch (_) {
       setState(() => _loading = false);
     }
@@ -46,30 +43,25 @@ class _RoomsScreenState extends State<RoomsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('🏨  Rooms'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _load)],
       ),
       body: Column(
         children: [
           _buildFilterBar(),
           Expanded(
             child: _loading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppTheme.gold),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: AppTheme.gold))
                 : RefreshIndicator(
                     onRefresh: _load,
                     color: AppTheme.gold,
                     child: GridView.builder(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1,
-                          ),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.1,
+                      ),
                       itemCount: _filtered.length,
                       itemBuilder: (_, i) => _buildRoomCard(_filtered[i]),
                     ),
@@ -100,10 +92,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
               onTap: () => setState(() => _filterType = t.$1),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
                   color: active ? color.withOpacity(0.15) : AppTheme.card,
                   border: Border.all(color: active ? color : AppTheme.border),
@@ -143,8 +132,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 36, height: 36,
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -157,25 +145,14 @@ class _RoomsScreenState extends State<RoomsScreen> {
                   color: AppTheme.teal.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'Available',
-                  style: TextStyle(
-                    color: AppTheme.tealLight,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: const Text('Available', style: TextStyle(color: AppTheme.tealLight, fontSize: 10, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
           const Spacer(),
           Text(
             'Room ${room.roomNumber}',
-            style: TextStyle(
-              color: color,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 2),
           Text(
@@ -185,11 +162,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
           const SizedBox(height: 4),
           Text(
             '\$${room.pricePerNight.toStringAsFixed(0)}/night',
-            style: TextStyle(
-              color: color.withOpacity(0.8),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: color.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.w600),
           ),
           Text(
             'Floor ${room.floor}',

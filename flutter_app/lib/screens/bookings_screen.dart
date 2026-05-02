@@ -1,8 +1,8 @@
 // ─── bookings_screen.dart ──────────────────────────────────────────────────
 import 'package:flutter/material.dart';
-import 'package:flutter_app/core/theme/theme.dart';
-import 'package:flutter_app/services/api_services.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
+import '../theme.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});

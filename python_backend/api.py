@@ -11,7 +11,8 @@ from pydantic import BaseModel, field_validator
 from datetime import date
 from typing import Optional, List
 from hotel_service import HotelService
-from models.models import RoomType, Priority
+from models.models import RoomType, Priority, Room, BookingRequest
+from algorithms.csp_with_tables import csp_full_report
 
 app = FastAPI(title="Hotel Booking API", version="1.0.0")
 
@@ -138,6 +139,38 @@ def run_assignment(body: RunAlgorithmBody):
 @app.get("/api/bookings")
 def get_bookings():
     return {"bookings": service.get_all_bookings()}
+
+
+@app.get("/api/csp-report")
+def csp_report():
+    """
+    Run CSP on current pending requests and return full step-by-step report:
+    - step1_initial_domains
+    - step2_ac3_pruning
+    - step3_assignment_steps
+    - final_state
+    - constraint_checks
+    - summary
+    """
+    requests = service.get_pending_requests()
+    if not requests:
+        # Use demo data if no pending requests
+        from datetime import date as d
+        requests = [
+            BookingRequest(1, "Ahmed Ali",    RoomType.SINGLE, d(2025,1,1), d(2025,1,4), Priority.VIP,    1),
+            BookingRequest(2, "Sara Mohamed", RoomType.DOUBLE, d(2025,1,2), d(2025,1,5), Priority.NORMAL, 2),
+            BookingRequest(3, "Mona Hassan",  RoomType.SINGLE, d(2025,1,2), d(2025,1,6), Priority.NORMAL, 3),
+            BookingRequest(4, "Khalid Omar",  RoomType.SUITE,  d(2025,1,1), d(2025,1,3), Priority.VIP,    4),
+            BookingRequest(5, "Laila Nasser", RoomType.DOUBLE, d(2025,1,3), d(2025,1,7), Priority.NORMAL, 5),
+            BookingRequest(6, "Omar Farouk",  RoomType.SINGLE, d(2025,1,5), d(2025,1,8), Priority.NORMAL, 6),
+            BookingRequest(7, "Fatma Said",   RoomType.SINGLE, d(2025,1,1), d(2025,1,4), Priority.NORMAL, 7),
+        ]
+    rooms = service.get_rooms()
+    try:
+        report = csp_full_report(requests, rooms)
+        return report
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 
 @app.delete("/api/bookings/{booking_id}")
