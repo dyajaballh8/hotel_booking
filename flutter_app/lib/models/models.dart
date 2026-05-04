@@ -1,14 +1,10 @@
-// ─── models.dart ──────────────────────────────────────────────────────────
-// Data models matching the Python backend exactly.
+// ─── models.dart ───────────────────────────────────────────────────────────
 
 enum RoomType { single, double, suite }
 
 enum Priority { normal, vip }
 
-// ignore: constant_identifier_names
 enum BookingStatus { confirmed, pending, cancelled, no_availability }
-
-// ── Room ──────────────────────────────────────────────────────────────────
 
 class Room {
   final int roomId;
@@ -17,6 +13,9 @@ class Room {
   final int floor;
   final double pricePerNight;
   final bool isActive;
+  final bool? available;
+  final Map<String, dynamic>? occupiedBy;
+  final List<Map<String, dynamic>> bookings;
 
   const Room({
     required this.roomId,
@@ -25,59 +24,58 @@ class Room {
     required this.floor,
     required this.pricePerNight,
     this.isActive = true,
+    this.available,
+    this.occupiedBy,
+    this.bookings = const [],
   });
 
-  factory Room.fromJson(Map<String, dynamic> json) => Room(
-        roomId: json['room_id'],
-        roomNumber: json['room_number'],
-        roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
-        floor: json['floor'],
-        pricePerNight: (json['price_per_night'] as num).toDouble(),
-        isActive: json['is_active'] ?? true,
-      );
+  factory Room.fromJson(Map<String, dynamic> j) => Room(
+    roomId: j['room_id'],
+    roomNumber: j['room_number'],
+    roomType: RoomType.values.firstWhere((e) => e.name == j['room_type']),
+    floor: j['floor'],
+    pricePerNight: (j['price_per_night'] as num).toDouble(),
+    isActive: j['is_active'] ?? true,
+    available: j['available'],
+    occupiedBy: j['occupied_by'],
+    bookings: j['bookings'] != null
+        ? List<Map<String, dynamic>>.from(j['bookings'])
+        : [],
+  );
 
   String get typeLabel => switch (roomType) {
-        RoomType.single => 'Single',
-        RoomType.double => 'Double',
-        RoomType.suite => 'Suite',
-      };
+    RoomType.single => 'Single',
+    RoomType.double => 'Double',
+    RoomType.suite => 'Suite',
+  };
+  bool get isAvailable => available ?? true;
 }
-
-// ── Guest ─────────────────────────────────────────────────────────────────
 
 class Guest {
   final int guestId;
-  final String name;
-  final String email;
+  final String name, email;
   final Priority priority;
-
   const Guest({
     required this.guestId,
     required this.name,
     required this.email,
     this.priority = Priority.normal,
   });
-
-  factory Guest.fromJson(Map<String, dynamic> json) => Guest(
-        guestId: json['guest_id'],
-        name: json['name'],
-        email: json['email'],
-        priority: Priority.values.firstWhere((e) => e.name == json['priority']),
-      );
+  factory Guest.fromJson(Map<String, dynamic> j) => Guest(
+    guestId: j['guest_id'],
+    name: j['name'],
+    email: j['email'],
+    priority: Priority.values.firstWhere((e) => e.name == j['priority']),
+  );
 }
 
-// ── Booking ───────────────────────────────────────────────────────────────
-
 class Booking {
-  final int bookingId;
+  final int bookingId, nights;
   final Guest guest;
   final Room room;
-  final DateTime checkIn;
-  final DateTime checkOut;
+  final DateTime checkIn, checkOut;
   final BookingStatus status;
   final double totalPrice;
-  final int nights;
-
   const Booking({
     required this.bookingId,
     required this.guest,
@@ -88,73 +86,82 @@ class Booking {
     required this.totalPrice,
     required this.nights,
   });
-
-  factory Booking.fromJson(Map<String, dynamic> json) => Booking(
-        bookingId: json['booking_id'],
-        guest: Guest.fromJson(json['guest']),
-        room: Room.fromJson(json['room']),
-        checkIn: DateTime.parse(json['check_in']),
-        checkOut: DateTime.parse(json['check_out']),
-        status: BookingStatus.values.firstWhere((e) => e.name == json['status']),
-        totalPrice: (json['total_price'] as num).toDouble(),
-        nights: json['nights'],
-      );
+  factory Booking.fromJson(Map<String, dynamic> j) => Booking(
+    bookingId: j['booking_id'],
+    guest: Guest.fromJson(j['guest']),
+    room: Room.fromJson(j['room']),
+    checkIn: DateTime.parse(j['check_in']),
+    checkOut: DateTime.parse(j['check_out']),
+    status: BookingStatus.values.firstWhere((e) => e.name == j['status']),
+    totalPrice: (j['total_price'] as num).toDouble(),
+    nights: j['nights'],
+  );
 }
 
-// ── BookingRequest ────────────────────────────────────────────────────────
-
-class BookingRequest {
-  final int? requestId;
-  final int guestId;
-  final String guestName;
-  final RoomType roomType;
-  final DateTime checkIn;
-  final DateTime checkOut;
-  final Priority priority;
-  final int nights;
-
-  const BookingRequest({
-    this.requestId,
-    required this.guestId,
-    required this.guestName,
+class CspConstraintLog {
+  final String room, roomType, reason;
+  final int floor;
+  final double pricePerNight;
+  final bool passed;
+  const CspConstraintLog({
+    required this.room,
+    required this.floor,
     required this.roomType,
-    required this.checkIn,
-    required this.checkOut,
-    this.priority = Priority.normal,
-    required this.nights,
+    required this.pricePerNight,
+    required this.passed,
+    required this.reason,
   });
-
-  factory BookingRequest.fromJson(Map<String, dynamic> json) => BookingRequest(
-        requestId: json['request_id'],
-        guestId: json['guest_id'],
-        guestName: json['guest_name'],
-        roomType: RoomType.values.firstWhere((e) => e.name == json['room_type']),
-        checkIn: DateTime.parse(json['check_in']),
-        checkOut: DateTime.parse(json['check_out']),
-        priority: Priority.values.firstWhere((e) => e.name == json['priority']),
-        nights: json['nights'],
-      );
-
-  Map<String, dynamic> toJson() => {
-        'guest_id': guestId,
-        'guest_name': guestName,
-        'room_type': roomType.name,
-        'check_in': checkIn.toIso8601String().substring(0, 10),
-        'check_out': checkOut.toIso8601String().substring(0, 10),
-        'priority': priority.name,
-      };
+  factory CspConstraintLog.fromJson(Map<String, dynamic> j) => CspConstraintLog(
+    room: j['room'],
+    floor: j['floor'],
+    roomType: j['room_type'],
+    pricePerNight: (j['price_per_night'] as num).toDouble(),
+    passed: j['passed'],
+    reason: j['reason'],
+  );
 }
 
-// ── DashboardStats ────────────────────────────────────────────────────────
+class CspBookingResult {
+  final String status, reason;
+  final Map<String, dynamic>? assignedRoom;
+  final List<String> triedRooms;
+  final List<Map<String, dynamic>> rejectedRooms;
+  final List<CspConstraintLog> constraintLog;
+  bool get isConfirmed => status == 'confirmed';
+  const CspBookingResult({
+    required this.status,
+    required this.assignedRoom,
+    required this.reason,
+    required this.triedRooms,
+    required this.rejectedRooms,
+    required this.constraintLog,
+  });
+  factory CspBookingResult.fromJson(Map<String, dynamic> j) => CspBookingResult(
+    status: j['status'],
+    assignedRoom: j['assigned_room'],
+    reason: j['reason'],
+    triedRooms: List<String>.from(j['tried_rooms']),
+    rejectedRooms: List<Map<String, dynamic>>.from(j['rejected_rooms']),
+    constraintLog: (j['constraint_log'] as List)
+        .map((e) => CspConstraintLog.fromJson(e))
+        .toList(),
+  );
+}
+
+class BookResult {
+  final CspBookingResult cspResult;
+  final Booking? booking;
+  const BookResult({required this.cspResult, this.booking});
+  factory BookResult.fromJson(Map<String, dynamic> j) => BookResult(
+    cspResult: CspBookingResult.fromJson(j['csp_result']),
+    booking: j['booking'] != null ? Booking.fromJson(j['booking']) : null,
+  );
+}
 
 class DashboardStats {
-  final int totalRooms;
-  final int totalBookings;
-  final int activeStays;
+  final int totalRooms, totalBookings, activeStays, pendingRequests;
   final double totalRevenue;
   final Map<String, int> roomsByType;
-  final int pendingRequests;
-
   const DashboardStats({
     required this.totalRooms,
     required this.totalBookings,
@@ -163,42 +170,12 @@ class DashboardStats {
     required this.roomsByType,
     required this.pendingRequests,
   });
-
-  factory DashboardStats.fromJson(Map<String, dynamic> json) => DashboardStats(
-        totalRooms: json['total_rooms'],
-        totalBookings: json['total_bookings'],
-        activeStays: json['active_stays'],
-        totalRevenue: (json['total_revenue'] as num).toDouble(),
-        roomsByType: Map<String, int>.from(json['rooms_by_type']),
-        pendingRequests: json['pending_requests'],
-      );
-}
-
-// ── AssignmentResult ──────────────────────────────────────────────────────
-
-class AssignmentResult {
-  final String status;
-  final String algorithm;
-  final List<Booking> bookings;
-  final List<BookingRequest> unassigned;
-  final int totalAssigned;
-  final int totalUnassigned;
-
-  const AssignmentResult({
-    required this.status,
-    required this.algorithm,
-    required this.bookings,
-    required this.unassigned,
-    required this.totalAssigned,
-    required this.totalUnassigned,
-  });
-
-  factory AssignmentResult.fromJson(Map<String, dynamic> json) => AssignmentResult(
-        status: json['status'],
-        algorithm: json['algorithm'] ?? '',
-        bookings: (json['bookings'] as List).map((e) => Booking.fromJson(e)).toList(),
-        unassigned: (json['unassigned'] as List).map((e) => BookingRequest.fromJson(e)).toList(),
-        totalAssigned: json['total_assigned'] ?? 0,
-        totalUnassigned: json['total_unassigned'] ?? 0,
-      );
+  factory DashboardStats.fromJson(Map<String, dynamic> j) => DashboardStats(
+    totalRooms: j['total_rooms'],
+    totalBookings: j['total_bookings'],
+    activeStays: j['active_stays'],
+    totalRevenue: (j['total_revenue'] as num).toDouble(),
+    roomsByType: Map<String, int>.from(j['rooms_by_type']),
+    pendingRequests: j['pending_requests'],
+  );
 }

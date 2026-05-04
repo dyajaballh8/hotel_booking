@@ -1,4 +1,3 @@
-// ─── dashboard_screen.dart ─────────────────────────────────────────────────
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
@@ -6,7 +5,6 @@ import '../theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -25,21 +23,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final stats = await _api.getDashboard();
+      final s = await _api.getDashboard();
       setState(() {
-        _stats = stats;
+        _stats = s;
         _loading = false;
       });
     } catch (e) {
       setState(() => _loading = false);
-      if (mounted) {
+      if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Connection error: $e'),
+            content: Text('تعذر الاتصال: $e'),
             backgroundColor: Colors.red,
           ),
         );
-      }
     }
   }
 
@@ -48,7 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       appBar: AppBar(
-        title: const Text('🏨  Hotel Dashboard'),
+        title: const Text('🏨  لوحة التحكم'),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
         ],
@@ -58,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : _stats == null
           ? const Center(
               child: Text(
-                'Failed to load',
+                'فشل التحميل',
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
             )
@@ -71,11 +68,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatGrid(),
+                    _statGrid(),
                     const SizedBox(height: 24),
-                    _buildRoomTypeBreakdown(),
+                    _roomTypeBreakdown(),
                     const SizedBox(height: 24),
-                    _buildQuickActions(),
+                    _quickActions(),
                   ],
                 ),
               ),
@@ -83,46 +80,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatGrid() {
-    final stats = _stats!;
+  Widget _statGrid() {
+    final s = _stats!;
     final items = [
-      _StatItem(
-        'Total Rooms',
-        stats.totalRooms.toString(),
+      _Stat(
+        'الغرف',
+        s.totalRooms.toString(),
         Icons.meeting_room,
         AppTheme.gold,
       ),
-      _StatItem(
-        'Bookings',
-        stats.totalBookings.toString(),
+      _Stat(
+        'الحجوزات',
+        s.totalBookings.toString(),
         Icons.book_online,
         AppTheme.teal,
       ),
-      _StatItem(
-        'Active Stays',
-        stats.activeStays.toString(),
+      _Stat(
+        'نزلاء الآن',
+        s.activeStays.toString(),
         Icons.person,
         const Color(0xFF9B6FD4),
       ),
-      _StatItem(
-        'Revenue',
-        '\$${stats.totalRevenue.toStringAsFixed(0)}',
+      _Stat(
+        'الإيرادات',
+        '\$${s.totalRevenue.toStringAsFixed(0)}',
         Icons.attach_money,
         const Color(0xFF4CAF50),
       ),
-      _StatItem(
-        'Pending',
-        stats.pendingRequests.toString(),
-        Icons.pending_actions,
-        const Color(0xFFFF9800),
-      ),
     ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Overview',
+          'نظرة عامة',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 18,
@@ -137,57 +127,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 1.3,
-          children: items.map(_buildStatCard).toList(),
+          children: items.map((s) => _statCard(s)).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(_StatItem item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: item.color.withOpacity(0.3)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(item.icon, color: item.color, size: 22),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.value,
-                style: TextStyle(
-                  color: item.color,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
+  Widget _statCard(_Stat s) => Container(
+    decoration: BoxDecoration(
+      color: AppTheme.card,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: s.color.withOpacity(0.3)),
+    ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Icon(s.icon, color: s.color, size: 22),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              s.value,
+              style: TextStyle(
+                color: s.color,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
               ),
-              Text(
-                item.label,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                ),
+            ),
+            Text(
+              s.label,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 
-  Widget _buildRoomTypeBreakdown() {
+  Widget _roomTypeBreakdown() {
     final byType = _stats!.roomsByType;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Rooms by Type',
+          'الغرف حسب النوع',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 18,
@@ -220,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  '${e.value} rooms',
+                  '${e.value} غرف',
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 13,
@@ -234,12 +222,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _quickActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Quick Actions',
+          'إجراءات سريعة',
           style: TextStyle(
             color: AppTheme.textPrimary,
             fontSize: 18,
@@ -250,11 +238,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: _ActionButton(
-                label: 'New Booking',
-                icon: Icons.add,
-                color: AppTheme.gold,
-                onTap: () => Navigator.pushNamed(
+              child: _ActionBtn(
+                'حجز جديد',
+                Icons.add,
+                AppTheme.gold,
+                () => Navigator.pushNamed(
                   context,
                   '/new_booking',
                 ).then((_) => _load()),
@@ -262,14 +250,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _ActionButton(
-                label: 'Run Algorithm',
-                icon: Icons.play_arrow,
-                color: AppTheme.teal,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  '/assign',
-                ).then((_) => _load()),
+              child: _ActionBtn(
+                'الجدول',
+                Icons.list_alt,
+                AppTheme.teal,
+                () => Navigator.pushNamed(context, '/bookings'),
               ),
             ),
           ],
@@ -278,88 +263,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           children: [
             Expanded(
-              child: _ActionButton(
-                label: 'All Bookings',
-                icon: Icons.list_alt,
-                color: const Color(0xFF9B6FD4),
-                onTap: () => Navigator.pushNamed(context, '/bookings'),
+              child: _ActionBtn(
+                'الغرف',
+                Icons.meeting_room,
+                const Color(0xFF4A9FD4),
+                () => Navigator.pushNamed(context, '/rooms'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _ActionButton(
-                label: 'Pending',
-                icon: Icons.pending_actions,
-                color: const Color(0xFFFF9800),
-                onTap: () => Navigator.pushNamed(context, '/pending'),
+              child: _ActionBtn(
+                'تقرير CSP',
+                Icons.analytics,
+                const Color(0xFF9B6FD4),
+                () => Navigator.pushNamed(context, '/csp_report'),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: _ActionButton(
-            label: 'CSP — تقرير التوزيع التفصيلي',
-            icon: Icons.table_chart,
-            color: const Color(0xFF4A9FD4),
-            onTap: () => Navigator.pushNamed(context, '/csp_report'),
-          ),
         ),
       ],
     );
   }
-}
 
-class _StatItem {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  const _StatItem(this.label, this.value, this.icon, this.color);
-}
-
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          border: Border.all(color: color.withOpacity(0.4)),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
+  Widget _ActionBtn(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.4)),
+        borderRadius: BorderRadius.circular(10),
       ),
-    );
-  }
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _Stat {
+  final String label, value;
+  final IconData icon;
+  final Color color;
+  const _Stat(this.label, this.value, this.icon, this.color);
 }

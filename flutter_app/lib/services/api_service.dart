@@ -1,133 +1,92 @@
-// ─── api_service.dart ──────────────────────────────────────────────────────
-// HTTP client connecting Flutter to the Python FastAPI backend.
-// Uses http package. Add to pubspec.yaml:
-//   dependencies:
-//     http: ^1.2.0
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 import '../models/csp_report_model.dart';
 
 class ApiService {
+  // ── غيّر الـ IP ده لـ IP جهازك على الـ WiFi ──────────────────────────
+  // شغّل ipconfig على Windows → خد IPv4 Address تحت Wi-Fi
+  // مثال: 'http://192.168.1.5:8000'
+  // لو Emulator: 'http://10.0.2.2:8000'
   static const String _base = 'http://192.168.1.3:8000';
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  Future<Map<String, dynamic>> _get(String path) async {
+  // FIX 1: Changed return type from Map<String, dynamic> to dynamic
+  Future<dynamic> _get(String path) async {
     final res = await http.get(Uri.parse('$_base$path'));
-    if (res.statusCode != 200) {
-      throw Exception('GET $path failed: ${res.statusCode} ${res.body}');
-    }
-    return json.decode(res.body);
+    if (res.statusCode != 200) throw Exception('GET $path → ${res.statusCode}: ${res.body}');
+    return json.decode(utf8.decode(res.bodyBytes));
   }
 
-  Future<Map<String, dynamic>> _post(
-    String path,
-    Map<String, dynamic> body,
-  ) async {
-    final res = await http.post(
-      Uri.parse('$_base$path'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
-    if (res.statusCode != 200) {
-      throw Exception('POST $path failed: ${res.statusCode} ${res.body}');
-    }
-    return json.decode(res.body);
+  // FIX 1: Changed return type from Map<String, dynamic> to dynamic
+  Future<dynamic> _post(String path, Map<String, dynamic> body) async {
+    final res = await http.post(Uri.parse('$_base$path'),
+        headers: {'Content-Type': 'application/json'}, body: json.encode(body));
+    if (res.statusCode != 200) throw Exception('POST $path → ${res.statusCode}: ${res.body}');
+    return json.decode(utf8.decode(res.bodyBytes));
   }
 
-  Future<Map<String, dynamic>> _delete(String path) async {
+  // FIX 1: Changed return type from Map<String, dynamic> to dynamic
+  Future<dynamic> _delete(String path) async {
     final res = await http.delete(Uri.parse('$_base$path'));
-    if (res.statusCode != 200) {
-      throw Exception('DELETE $path failed: ${res.statusCode} ${res.body}');
-    }
+    if (res.statusCode != 200) throw Exception('DELETE $path → ${res.statusCode}');
     return json.decode(res.body);
   }
-
-  // ── Dashboard ─────────────────────────────────────────────────────────────
-
-  Future<DashboardStats> getDashboard() async {
-    final data = await _get('/api/dashboard');
-    return DashboardStats.fromJson(data);
-  }
-
-  // ── Rooms ─────────────────────────────────────────────────────────────────
-
-  Future<List<Room>> getRooms() async {
-    final data = await _get('/api/rooms');
-    return (data['rooms'] as List).map((e) => Room.fromJson(e)).toList();
-  }
-
-  Future<List<Room>> getAvailableRooms({
-    required DateTime checkIn,
-    required DateTime checkOut,
-    RoomType? roomType,
-  }) async {
-    String path =
-        '/api/rooms/available?check_in=${_fmt(checkIn)}&check_out=${_fmt(checkOut)}';
-    if (roomType != null) path += '&room_type=${roomType.name}';
-    final data = await _get(path);
-    return (data['rooms'] as List).map((e) => Room.fromJson(e)).toList();
-  }
-
-  // ── Guests ────────────────────────────────────────────────────────────────
-
-  Future<Guest> createGuest({
-    required String name,
-    required String email,
-    Priority priority = Priority.normal,
-  }) async {
-    final data = await _post('/api/guests', {
-      'name': name,
-      'email': email,
-      'priority': priority.name,
-    });
-    return Guest.fromJson(data);
-  }
-
-  // ── Booking Requests ──────────────────────────────────────────────────────
-
-  Future<BookingRequest> submitRequest(BookingRequest req) async {
-    final data = await _post('/api/requests', req.toJson());
-    return BookingRequest.fromJson(data['request']);
-  }
-
-  Future<List<BookingRequest>> getPendingRequests() async {
-    final data = await _get('/api/requests');
-    return (data['requests'] as List)
-        .map((e) => BookingRequest.fromJson(e))
-        .toList();
-  }
-
-  // ── Assignment ────────────────────────────────────────────────────────────
-
-  Future<AssignmentResult> runAssignment({
-    String algorithm = 'backtracking',
-  }) async {
-    final data = await _post('/api/assign', {'algorithm': algorithm});
-    return AssignmentResult.fromJson(data);
-  }
-
-  // ── Bookings ──────────────────────────────────────────────────────────────
-
-  Future<List<Booking>> getBookings() async {
-    final data = await _get('/api/bookings');
-    return (data['bookings'] as List).map((e) => Booking.fromJson(e)).toList();
-  }
-
-  Future<void> cancelBooking(int bookingId) async {
-    await _delete('/api/bookings/$bookingId');
-  }
-
-  // ── CSP Report ────────────────────────────────────────────────────────────
-
-  Future<CspReport> getCspReport() async {
-    final data = await _get('/api/csp-report');
-    return CspReport.fromJson(data);
-  }
-
-  // ── Util ──────────────────────────────────────────────────────────────────
 
   String _fmt(DateTime d) => d.toIso8601String().substring(0, 10);
+
+  // ── Dashboard ─────────────────────────────────────────────────────────
+  Future<DashboardStats> getDashboard() async =>
+      DashboardStats.fromJson(await _get('/api/dashboard'));
+
+  // ── Rooms ─────────────────────────────────────────────────────────────
+  Future<List<Room>> getRooms() async {
+    final d = await _get('/api/rooms');
+    return (d['rooms'] as List).map((e) => Room.fromJson(e)).toList();
+  }
+
+  Future<List<Room>> getRoomsWithStatus(DateTime checkIn, DateTime checkOut) async {
+    final d = await _get('/api/rooms/status?check_in=${_fmt(checkIn)}&check_out=${_fmt(checkOut)}');
+    return (d['rooms'] as List).map((e) => Room.fromJson(e)).toList();
+  }
+
+  Future<List<Room>> getRoomsAllBookings() async {
+    final d = await _get('/api/rooms/all-bookings');
+    return (d['rooms'] as List).map((e) => Room.fromJson(e)).toList();
+  }
+
+  // ── CSP Booking ───────────────────────────────────────────────────────
+  Future<BookResult> bookWithCsp({
+    required String guestName,
+    required String email,
+    required String roomType,
+    required DateTime checkIn,
+    required DateTime checkOut,
+    String priority = 'normal',
+  }) async {
+    final d = await _post('/api/book', {
+      'guest_name': guestName, 'email': email,
+      'room_type': roomType, 'priority': priority,
+      'check_in': _fmt(checkIn), 'check_out': _fmt(checkOut),
+    });
+    return BookResult.fromJson(d);
+  }
+
+  // ── Bookings ──────────────────────────────────────────────────────────
+  Future<List<Booking>> getBookings() async {
+    final d = await _get('/api/bookings');
+    return (d['bookings'] as List).map((e) => Booking.fromJson(e)).toList();
+  }
+
+  Future<List<Booking>> getBookingTable() async {
+    final d = await _get('/api/bookings/table');
+    return (d['bookings'] as List).map((e) => Booking.fromJson(e)).toList();
+  }
+
+  Future<void> cancelBooking(int id) async => await _delete('/api/bookings/$id');
+
+  // ── CSP Report ────────────────────────────────────────────────────────
+  // FIX 2: Safely handle whether the API returns a List [] or an Object {}
+  Future<dynamic> getCspReport() async {
+    return await _get('/api/csp-report');
+  }
 }
